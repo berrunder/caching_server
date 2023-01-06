@@ -1,8 +1,8 @@
-use std::fs;
 use std::io;
 use std::io::BufRead;
 use std::io::{Read, Write};
-use std::net::{TcpStream, ToSocketAddrs};
+use std::net::SocketAddr;
+use std::net::{TcpStream};
 
 use crate::db::MemoryCache;
 
@@ -35,13 +35,7 @@ pub fn parse_request(mut stream: TcpStream) -> Result<Request, io::Error> {
     })
 }
 
-fn process_request(request: Request) -> Vec<u8> {
-    // Read the third-party server address and port from the config file
-    let addr = fs::read_to_string("config.txt").expect(
-        "config.txt with backend server address and port (format 127.0.0.1:3000) must be present",
-    );
-    let socket_addr = addr.trim().to_socket_addrs().unwrap().next().unwrap();
-
+fn process_request(request: Request, socket_addr: SocketAddr) -> Vec<u8> {
     // Connect to the third-party server
     let mut stream = TcpStream::connect(socket_addr).unwrap();
 
@@ -56,7 +50,7 @@ fn process_request(request: Request) -> Vec<u8> {
     return response;
 }
 
-pub fn handle_request(database: &mut impl MemoryCache, request: Request) -> Vec<u8> {
+pub fn handle_request(database: &mut impl MemoryCache, request: Request, socket_addr: SocketAddr) -> Vec<u8> {
     let key = format!("{} {}", request.method, request.url);
 
     // Check the cache to see if we have already processed this request
@@ -66,7 +60,7 @@ pub fn handle_request(database: &mut impl MemoryCache, request: Request) -> Vec<
     }
 
     // Process the request and generate a response
-    let response = process_request(request);
+    let response = process_request(request, socket_addr);
 
     // Cache the response for future requests
     database.set(key, response.clone());
