@@ -10,15 +10,16 @@ use threadpool::ThreadPool;
 
 // Constant for maximum cache size
 const MAX_CACHE_SIZE: usize = 1024;
+// Constant for number of woring threads
+const N_THREADS: usize = 4;
 
 fn main() {
     // Create a listener to accept incoming connections
     let listener = TcpListener::bind("127.0.0.1:8080").unwrap();
 
-    let n_workers = 4;
     // Create an in-memory database to store cached responses
     let database = Arc::new(Mutex::new(LRUMemoryCache::new(MAX_CACHE_SIZE)));
-    let pool = ThreadPool::new(n_workers);
+    let pool = ThreadPool::new(N_THREADS);
 
     println!("Starting server at port 8080...");
 
@@ -39,7 +40,7 @@ fn main() {
                     let response = handle_request(&mut *db, request);
 
                     // Send the response back to the client
-                    stream.write_all(response.as_bytes()).unwrap();
+                    stream.write_all(&response).unwrap();
                 });
             }
             Err(e) => {

@@ -1,12 +1,12 @@
 use std::collections::{HashMap, VecDeque};
 
 pub trait MemoryCache {
-    fn set(&mut self, url: String, response: String);
-    fn get(&mut self, url: &str) -> Option<String>;
+    fn set(&mut self, url: String, response: Vec<u8>);
+    fn get(&mut self, url: &str) -> Option<Vec<u8>>;
 }
 
 pub struct LRUMemoryCache {
-    data: HashMap<String, String>,
+    data: HashMap<String, Vec<u8>>,
 
     // Keeps track of the order in which the URLs were accessed, with the most recently accessed URL at the front of the list
     access_order: VecDeque<String>,
@@ -26,7 +26,7 @@ impl LRUMemoryCache {
 }
 
 impl MemoryCache for LRUMemoryCache {
-    fn set(&mut self, url: String, response: String) {
+    fn set(&mut self, url: String, response: Vec<u8>) {
         // If the item already exists in the database, remove it from the access order list
         if self.data.contains_key(&url) {
             self.access_order.retain(|x| x != &url);
@@ -43,7 +43,7 @@ impl MemoryCache for LRUMemoryCache {
         self.data.insert(url, response);
     }
 
-    fn get(&mut self, url: &str) -> Option<String> {
+    fn get(&mut self, url: &str) -> Option<Vec<u8>> {
         // If the item exists in the database, move it to the front of the access order list
         if self.data.contains_key(url) {
             self.access_order.retain(|x| x != url);
