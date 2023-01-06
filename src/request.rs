@@ -1,5 +1,6 @@
 use std::fs;
 use std::io;
+use std::io::BufRead;
 use std::io::{Read, Write};
 use std::net::{TcpStream, ToSocketAddrs};
 
@@ -47,9 +48,10 @@ fn process_request(request: Request) -> Vec<u8> {
     // Send the request to the third-party server
     stream.write_all(&request.raw).unwrap();
 
+    let mut reader = io::BufReader::new(&mut stream);
     // Read the response from the third-party server
-    let mut response = Vec::new();
-    stream.read_to_end(&mut response).unwrap();
+    let response = reader.fill_buf().unwrap().to_vec();
+    reader.consume(response.len());
 
     return response;
 }
