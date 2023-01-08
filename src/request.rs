@@ -50,7 +50,7 @@ fn process_request(request: Request, socket_addr: SocketAddr) -> Vec<u8> {
     return response;
 }
 
-pub fn handle_request(database: &mut impl MemoryCache, request: Request, socket_addr: SocketAddr) -> Vec<u8> {
+pub fn handle_request(database: &mut impl MemoryCache<Vec<u8>>, request: Request, socket_addr: SocketAddr) -> Vec<u8> {
     let key = format!("{} {}", request.method, request.url);
 
     if request.method != "GET" {
