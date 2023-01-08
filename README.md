@@ -1,7 +1,7 @@
 # Caching proxy
 Simple implementation of reverse proxy caching server in Rust for learning purpose.
 
-Caches all incoming request by HTTP method and path. Uses LRU caching algorithm, default size of cache is 4096 items. Spawns 4 threads to process incoming requests.
+Caches all incoming GET request by HTTP method and path. Uses LRU caching algorithm, default size of cache is 4096 items. Spawns 4 threads to process incoming requests.
 
 ### Configuration
 

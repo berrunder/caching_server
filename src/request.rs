@@ -53,6 +53,9 @@ fn process_request(request: Request, socket_addr: SocketAddr) -> Vec<u8> {
 pub fn handle_request(database: &mut impl MemoryCache, request: Request, socket_addr: SocketAddr) -> Vec<u8> {
     let key = format!("{} {}", request.method, request.url);
 
+    if request.method != "GET" {
+        return process_request(request, socket_addr);
+    }
     // Check the cache to see if we have already processed this request
     if let Some(cached_response) = database.get(&key) {
         // Return the cached response if we have it
