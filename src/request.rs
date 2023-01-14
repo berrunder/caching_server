@@ -3,6 +3,7 @@ use std::io::BufRead;
 use std::io::{Read, Write};
 use std::net::SocketAddr;
 use std::net::{TcpStream};
+use std::sync::MutexGuard;
 
 use crate::db::MemoryCache;
 
@@ -50,7 +51,7 @@ fn process_request(request: Request, socket_addr: SocketAddr) -> Vec<u8> {
     return response;
 }
 
-pub fn handle_request(database: &mut impl MemoryCache<Vec<u8>>, request: Request, socket_addr: SocketAddr) -> Vec<u8> {
+pub fn handle_request(mut database: MutexGuard<'_, Box<dyn MemoryCache<Vec<u8>> + Send>>, request: Request, socket_addr: SocketAddr) -> Vec<u8> {
     let key = format!("{} {}", request.method, request.url);
 
     if request.method != "GET" {

@@ -25,7 +25,7 @@ fn main() {
         .arg(
             Arg::new("algo")
                 .short('a')
-                .long("alog")
+                .long("algo")
                 .value_parser(["LFU", "LRU"])
                 .default_value("LRU")
                 .help("Caching algorithm to use, can be LFU or LRU"),
@@ -42,14 +42,6 @@ fn main() {
         .parse()
         .unwrap_or(N_THREADS);
 
-    // Create an in-memory database to store cached responses
-    // if algo == "LFU" {
-    //     let mut database = LFUMemoryCache::new(size);
-    //     start_server(Box::new(database), n_threads);
-    // } else {
-    //     let mut database = LRUMemoryCache::new(size);
-    //     start_server(Box::new(database), n_threads);
-    // }
     // Create a listener to accept incoming connections
     let listener = TcpListener::bind("127.0.0.1:8080").unwrap();
     // Read the third-party server address and port from the config file
@@ -58,7 +50,8 @@ fn main() {
     );
     let socket_addr = back_addr.trim().to_socket_addrs().unwrap().next().unwrap();
     let pool = ThreadPool::new(n_threads);
-    let database = Arc::new(Mutex::new(LRUMemoryCache::new(size)));
+    let db_instance = get_database_instance(&algo, size);
+    let database = Arc::new(Mutex::new(db_instance));
 
     println!("Starting server at port 8080...");
 
@@ -74,9 +67,9 @@ fn main() {
 
                 // Handle the request in a separate thread
                 pool.execute(move || {
-                    let mut db = database.lock().unwrap();
+                    let db = database.lock().unwrap();
                     // Generate a response for the request
-                    let response = handle_request(&mut *db, request, socket_addr);
+                    let response = handle_request(db, request, socket_addr);
 
                     // Send the response back to the client
                     stream.write_all(&response).unwrap();
@@ -86,5 +79,13 @@ fn main() {
                 eprintln!("Error: {}", e);
             }
         }
+    }
+}
+
+fn get_database_instance(algo: &str, size: usize) -> Box<dyn MemoryCache<Vec<u8>> + Send> {
+    match algo {
+        "LFU" => Box::new(LFUMemoryCache::new(size)),
+        "LRU" => Box::new(LRUMemoryCache::new(size)),
+        _ => Box::new(LRUMemoryCache::new(size)),
     }
 }
