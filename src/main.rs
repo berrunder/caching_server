@@ -1,8 +1,11 @@
 mod db;
 mod request;
 
-use db::LRUMemoryCache;
+use clap::{Arg, Command};
+use db::LFUMemoryCache;
+use db::{LRUMemoryCache, MemoryCache};
 use request::{handle_request, parse_request};
+use std::env;
 use std::fs;
 use std::io::Write;
 use std::net::{TcpListener, ToSocketAddrs};
@@ -15,6 +18,38 @@ const MAX_CACHE_SIZE: usize = 1024;
 const N_THREADS: usize = 4;
 
 fn main() {
+    let matches = Command::new("Caching server")
+        .version("0.1.0")
+        .author("Alexander Cherkashin <alexander.cherkashin@csssr.com>")
+        .about("Caches incoming get requests")
+        .arg(
+            Arg::new("algo")
+                .short('a')
+                .long("alog")
+                .value_parser(["LFU", "LRU"])
+                .default_value("LRU")
+                .help("Caching algorithm to use, can be LFU or LRU"),
+        )
+        .get_matches();
+
+    let algo = matches.get_one::<String>("algo").unwrap();
+    let size: usize = env::var("MAX_CACHE_SIZE")
+        .unwrap_or(MAX_CACHE_SIZE.to_string())
+        .parse()
+        .unwrap_or(MAX_CACHE_SIZE);
+    let n_threads: usize = env::var("N_THREADS")
+        .unwrap_or(N_THREADS.to_string())
+        .parse()
+        .unwrap_or(N_THREADS);
+
+    // Create an in-memory database to store cached responses
+    // if algo == "LFU" {
+    //     let mut database = LFUMemoryCache::new(size);
+    //     start_server(Box::new(database), n_threads);
+    // } else {
+    //     let mut database = LRUMemoryCache::new(size);
+    //     start_server(Box::new(database), n_threads);
+    // }
     // Create a listener to accept incoming connections
     let listener = TcpListener::bind("127.0.0.1:8080").unwrap();
     // Read the third-party server address and port from the config file
@@ -22,10 +57,8 @@ fn main() {
         "config.txt with backend server address and port (format 127.0.0.1:3000) must be present",
     );
     let socket_addr = back_addr.trim().to_socket_addrs().unwrap().next().unwrap();
-
-    // Create an in-memory database to store cached responses
-    let database = Arc::new(Mutex::new(LRUMemoryCache::new(MAX_CACHE_SIZE)));
-    let pool = ThreadPool::new(N_THREADS);
+    let pool = ThreadPool::new(n_threads);
+    let database = Arc::new(Mutex::new(LRUMemoryCache::new(size)));
 
     println!("Starting server at port 8080...");
 
