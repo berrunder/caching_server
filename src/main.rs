@@ -33,11 +33,11 @@ fn main() {
         .get_matches();
 
     let algo = matches.get_one::<String>("algo").unwrap();
-    let size: usize = env::var("MAX_CACHE_SIZE")
+    let size: usize = env::var("CACHING_SERVER_MAX_CACHE_SIZE")
         .unwrap_or(MAX_CACHE_SIZE.to_string())
         .parse()
         .unwrap_or(MAX_CACHE_SIZE);
-    let n_threads: usize = env::var("N_THREADS")
+    let n_threads: usize = env::var("CACHING_SERVER_N_THREADS")
         .unwrap_or(N_THREADS.to_string())
         .parse()
         .unwrap_or(N_THREADS);
